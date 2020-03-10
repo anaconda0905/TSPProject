@@ -5,40 +5,56 @@
 #include <fstream>
 #include <queue>
 using namespace std;
+bool hashFlag[1000000] = { false };
 
-class Node{
 	
-	int key;
-	vector<Node *>child;
+class Node{
 public:
+	std::size_t key;
+	vector<Node *>child;
+	StreetSegment data;
+
 	Node();
-	Node(int);
-	Node*  insert(Node*, int, Node*);
+	Node(std::size_t, Node *);
+	Node(std::size_t, StreetSegment);
+	Node*  insert(Node*, std::size_t, Node*);
 	void Inorder(Node*);
 };
 
+
 Node::Node(){
+	
 	key = 0;
 }
-Node::Node(int data){
-	key = data;
+Node::Node(std::size_t hashval, Node* node){
+	key = hashval;
+	data = node->data;
 }
 
-Node* Node::insert(Node* root, int data, Node* node){
+Node::Node(std::size_t hashval, StreetSegment streetseg){
+	key = hashval;
+	data = streetseg;
+}
+
+
+Node* Node::insert(Node* root, std::size_t hashval, Node* node){
 	Node* tempNode;
 	if (!root){
-		return new Node(data);
+		Node *newnode = new Node(hashval, node);
+		
+		return newnode;
 	}
 	else{
-		if (root->key == data){
+		if (root->key == hashval || node->key != root->key){
 			root->child.push_back(node);
 		}
 
 		else{
 			for (auto i = root->child.begin(); i != root->child.end(); ++i){
 				tempNode = *i;
-				tempNode = insert(tempNode, data, node);
+				tempNode = insert(tempNode, hashval, node);
 			}
+
 		}
 		return root;
 	}
@@ -53,7 +69,7 @@ void Node::Inorder(Node* root){
 		for (auto i = root->child.begin(); i != root->child.end(); ++i){
 			tempNode = *i;
 			Inorder(tempNode);
-			cout << tempNode->key << endl;
+			cout << tempNode->key <<"->" <<tempNode->data.end.latitudeText<<":"<<tempNode->data.end.longitudeText<< endl;
 		}
 		
 	}
@@ -83,36 +99,26 @@ StreetMapImpl::~StreetMapImpl()
 
 bool StreetMapImpl::load(string mapFile)
 {
-	Node b, *root = NULL;
-	root = b.insert(root,30, new Node(0));
-	b.insert(root, 30, new Node(26));
-	b.insert(root, 30, new Node(27));
-	b.insert(root, 27, new Node(40));
-	b.insert(root, 27, new Node(41));
-	
-	b.insert(root, 30, new Node(28));
-	b.insert(root, 28, new Node(25));
-	b.insert(root, 25, new Node(24));
-	b.insert(root, 24, new Node(26));
-	b.insert(root, 26, new Node(31));
-	b.Inorder(root);
-
+	Node node, *root = NULL;
+	root = node.insert(root, 1, new Node());
 	string line;
 	ifstream myfile(mapFile);
 	bool _flag_address = true;
 	bool _flag_line_seg_num = false;
 	bool _flag_data = false;
 	
+	
 	vector<StreetSegment> streetseg;
-	int a = 41;
+	
 	
 	if (myfile.is_open())
 	{
+		
 		int _num_line_seg = 0;
 		StreetSegment temp;
-		while (getline(myfile, line) && a>0)
+		
+		while (getline(myfile, line))
 		{
-			--a;
 			if (_flag_address == true){
 				
 				temp.name = line;
@@ -144,25 +150,23 @@ bool StreetMapImpl::load(string mapFile)
 				
 				temp.end = GeoCoord(geovalue[2], geovalue[3]);
 				streetseg.push_back(temp);
-
 				
 				delete[] token;
 				if (_num_line_seg == 0){
-					cout << "Output of begin and end: ";
+					temp.start = GeoCoord();
+					temp.end = GeoCoord(streetseg.front().start.latitudeText, streetseg.front().start.longitudeText);
+					node.insert(root, 1, new Node(std::hash<string>()(temp.end.latitudeText + temp.end.longitudeText), temp));
+
 					for (auto i = streetseg.begin(); i != streetseg.end(); ++i){
 						temp = *i;
-						cout << temp.start.latitude << ":" << std::hash<string>()(temp.start.latitudeText + temp.start.longitudeText) << " -> ";
+						node.insert(root, std::hash<string>()(temp.start.latitudeText + temp.start.longitudeText), new Node(std::hash<string>()(temp.end.latitudeText + temp.end.longitudeText), temp));
 					}
-					cout << endl;
-
-
 					_flag_address = true;
 					streetseg.clear();
 				}
 			}
-			//cout << line << '\n';
 		}
-
+		//node.Inorder(root);
 		myfile.close();
 		return true;
 	}
