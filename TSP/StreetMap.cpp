@@ -5,8 +5,6 @@
 #include <fstream>
 #include <queue>
 using namespace std;
-bool hashFlag[1000000] = { false };
-
 	
 class Node{
 public:
@@ -79,6 +77,49 @@ unsigned int hash(const GeoCoord& g)
 {
     return std::hash<string>()(g.latitudeText + g.longitudeText);
 }
+
+bool hasPath(Node *root, vector<GeoCoord>& arr, std::size_t x)
+{
+	Node* tempnode;
+	bool _flag = false;
+	if (!root)
+		return false;
+	arr.push_back(root->data.end);
+	if (root->key == x){
+		return true;
+	}
+	else{
+		for (auto i = root->child.begin(); i != root->child.end(); ++i){
+			tempnode = *i;
+			_flag |= hasPath(tempnode, arr, x);
+		}
+		if(_flag)
+			return _flag;
+	}
+	arr.pop_back();
+	return false;
+}
+
+// function to print the path from root to the 
+// given node if the node lies in the binary tree 
+void printPath(Node *root, std::size_t x)
+{
+	vector<GeoCoord> arr;
+	GeoCoord temp;
+	if (hasPath(root, arr, x))
+	{
+		cout << "yes" << endl;
+		for (auto i = arr.begin(); i != arr.end(); ++i){
+			temp = *i;
+			cout << temp.latitudeText << ":" << temp.longitudeText << "->";
+		}
+	}
+
+	// 'x' is not present in the binary tree  
+	else
+		cout << "No Path";
+}
+
 
 class StreetMapImpl
 {
@@ -167,6 +208,10 @@ bool StreetMapImpl::load(string mapFile)
 			}
 		}
 		//node.Inorder(root);
+		GeoCoord tempGeo = GeoCoord("34.0290818", "-118.4859930");
+		std::size_t point = std::hash<string>()(tempGeo.latitudeText + tempGeo.longitudeText);
+		
+		printPath(root, point);
 		myfile.close();
 		return true;
 	}
@@ -176,9 +221,10 @@ bool StreetMapImpl::load(string mapFile)
 	}
 }
 
+
 bool StreetMapImpl::getSegmentsThatStartWith(const GeoCoord& gc, vector<StreetSegment>& segs) const
 {
-
+	
     return false;  // Delete this line and implement this function correctly
 }
 
