@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     }
 
     StreetMap sm;
-        
+
     if (!sm.load(argv[1]))
     {
         cout << "Unable to load map data file " << argv[1] << endl;

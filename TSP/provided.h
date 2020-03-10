@@ -65,6 +65,7 @@ struct StreetSegment
     std::string name;
 };
 
+
 inline
 bool operator==(const StreetSegment& lhs, const StreetSegment& rhs)
 {
@@ -290,5 +291,4 @@ inline double angleOfLine(const StreetSegment& line)
 
     return result;
 }
-
 #endif // PROVIDED_INCLUDED
