@@ -10,14 +10,7 @@ using namespace std;
 struct edge
 {
 	std::size_t dest;
-	StreetSegment seg;
 	struct edge *link;
-	edge(std::size_t s, StreetSegment streetseg)
-	{
-		this->link = NULL;
-		this->dest = s;
-		this->seg = streetseg;
-	}
 };
 
 std::size_t gethash(const GeoCoord& g)
@@ -62,6 +55,7 @@ StreetMapImpl::StreetMapImpl(std::size_t node_name, StreetSegment streetseg)
 
 StreetMapImpl::~StreetMapImpl()
 {
+	delete start;
 }
 
 void StreetMapImpl::insert_node(std::size_t node_name, StreetSegment streetSeg){
@@ -79,7 +73,7 @@ void StreetMapImpl::insert_node(std::size_t node_name, StreetSegment streetSeg){
 	ptr->next = tmp;
 }
 
-bool StreetMapImpl::isEdge(std::size_t u, std::size_t v){
+bool StreetMapImpl::isEdge(std::size_t u, std::size_t v, StreetSegment streetSeg){
 	StreetMapImpl *locu, *locv;
 	edge *ptr;
 	locu = find(u);
@@ -104,7 +98,7 @@ bool StreetMapImpl::isEdge(std::size_t u, std::size_t v){
 	}
 }
 
-void StreetMapImpl::insert_edge(std::size_t u, std::size_t v, StreetSegment streetSeg){
+void StreetMapImpl::insert_edge(std::size_t u, std::size_t v){
 	StreetMapImpl *locu, *locv;
 	edge *ptr, *tmp;
 	locu = find(u);
@@ -120,8 +114,9 @@ void StreetMapImpl::insert_edge(std::size_t u, std::size_t v, StreetSegment stre
 		cout << "Destination node not present, first insert node" << v << endl;
 		return;
 	}
-	tmp = new edge(v, streetSeg);
-	
+	tmp = (struct edge *)malloc(sizeof(struct edge));
+	tmp->dest = v;
+	tmp->link = NULL;
 
 
 	if (locu->adj == NULL)  
@@ -234,7 +229,7 @@ bool StreetMapImpl::load(string mapFile)
 				}
 
 				if (!isEdge(hash_val_u, hash_val_v))
-					this->insert_edge(hash_val_u, hash_val_v, temp);
+					this->insert_edge(hash_val_u, hash_val_v);
 				
 				delete[] token;
 
@@ -244,11 +239,8 @@ bool StreetMapImpl::load(string mapFile)
 			}
 		}
 		//display();
-
-		
 		vector<StreetSegment> segments;
-		
-		GeoCoord tempGeo = GeoCoord("34.0421285", "-118.4895033");
+		GeoCoord tempGeo = GeoCoord("34.0290818", "-118.4859930");
 		if (this->getSegmentsThatStartWith(tempGeo, segments))
 			cout << "yes" << endl;
 		else
@@ -268,28 +260,15 @@ bool StreetMapImpl::load(string mapFile)
 bool StreetMapImpl::getSegmentsThatStartWith(const GeoCoord& gc, vector<StreetSegment>& segs) const
 {
 	StreetMapImpl *loc_gc = NULL;
+	edge *ptr;
 	loc_gc = loc_gc->find(gethash(gc));
-
-	StreetMapImpl *ptr;
-	edge *q;
-	int cnt = 1;
-	ptr = loc_gc;
-
-	while (ptr != NULL && cnt > 0)
-	{
-		
-		//cout << ptr->seg.start.latitudeText << ":" << ptr->seg.start.longitudeText << endl;
-
-		q = ptr->adj;
-		while (q != NULL)
+	if (!loc_gc){
+		ptr = loc_gc->adj;
+		while (ptr->link != NULL)
 		{
-			//cout << q->seg.end.latitudeText << ":" << q->seg.end.longitudeText << endl;
-			segs.push_back(q->seg);
-			q = q->link;
+			ptr = ptr->link;
+
 		}
-		cout << endl;
-		ptr = ptr->next;
-		cnt--;
 	}
 	
     return false;  // Delete this line and implement this function correctly
